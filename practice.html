@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Practice — Maths Practice</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar"></aside>
+    <main>
+      <div id="topbar"></div>
+
+      <h2 style="margin:0 0 4px;">Practice</h2>
+      <p style="color:var(--muted); margin:0 0 18px;">50+ topics across school maths and competitive exams. Pick one and start a timed round.</p>
+
+      <div id="chips" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;"></div>
+
+      <div id="topicGrid" class="grid-4"></div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const user = MP.requireUserOrRedirect();
+    if (user) {
+      renderLayout('practice.html');
+
+      const categories = ['All', ...Array.from(new Set(TOPICS.map(t => t.category)))];
+      let activeCategory = 'All';
+      const scores = MP.getAllScores();
+
+      function iconColor(category) {
+        const map = {
+          'Foundations': 'linear-gradient(135deg,#6d5ef8,#9b8bff)',
+          'Commercial Maths': 'linear-gradient(135deg,#f5a623,#f7c873)',
+          'Time, Speed & Work': 'linear-gradient(135deg,#17b6a7,#5fd6c9)',
+          'Algebra': 'linear-gradient(135deg,#6d5ef8,#9b8bff)',
+          'Geometry & Mensuration': 'linear-gradient(135deg,#17b6a7,#5fd6c9)',
+          'Data & Statistics': 'linear-gradient(135deg,#f5a623,#f7c873)',
+          'Miscellaneous': 'linear-gradient(135deg,#6d5ef8,#9b8bff)'
+        };
+        return map[category] || 'linear-gradient(135deg,#6d5ef8,#9b8bff)';
+      }
+
+      function renderChips() {
+        document.getElementById('chips').innerHTML = categories.map(c => `
+          <button class="btn btn-sm ${c === activeCategory ? 'btn-primary' : 'btn-outline'}" data-cat="${c}">${c}</button>
+        `).join('');
+        document.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
+          activeCategory = b.getAttribute('data-cat');
+          renderChips(); renderGrid();
+        }));
+      }
+
+      function renderGrid() {
+        const list = TOPICS.filter(t => activeCategory === 'All' || t.category === activeCategory);
+        document.getElementById('topicGrid').innerHTML = list.map(t => {
+          const s = scores[t.id];
+          const bm = MP.isBookmarked(t.id) ? '🔖' : '';
+          return `
+            <div class="card topic-card">
+              <div class="topic-head">
+                <div class="topic-icon" style="background:${iconColor(t.category)};">${t.icon}</div>
+                <div><div class="topic-name">${t.name} ${bm}</div><div class="topic-sub">${t.category}</div></div>
+              </div>
+              <div class="topic-sub">${s ? `Best: ${s.best}% · ${s.solved} solved` : 'Not started yet'}</div>
+              <a href="runner.html?id=${t.id}" class="btn btn-primary btn-block btn-sm">Practice</a>
+            </div>`;
+        }).join('');
+      }
+
+      renderChips();
+      renderGrid();
+    }
+  </script>
+</body>
+</html>

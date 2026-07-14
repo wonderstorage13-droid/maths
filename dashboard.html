@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — Maths Practice</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar"></aside>
+    <main>
+      <div id="topbar"></div>
+
+      <h2 id="greeting" style="margin: 0 0 4px;">Good morning! 👋</h2>
+      <p style="color: var(--muted); margin: 0 0 20px;">Let's solve some problems and make today productive.</p>
+
+      <div class="card">
+        <div class="stat-grid" id="statGrid"></div>
+      </div>
+
+      <div class="section-title">
+        <span>Continue Practicing</span>
+        <a href="topics.html" class="view-all">View all →</a>
+      </div>
+      <div class="grid-3" id="continueGrid"></div>
+
+      <div class="section-title">
+        <span>Recommended for You</span>
+        <a href="topics.html" class="view-all">View all topics →</a>
+      </div>
+      <div class="grid-4" id="recommendedGrid"></div>
+
+      <div class="card quote-card">
+        “Mathematics is not about numbers, equations, computations, or algorithms: it is about understanding.”
+        <span class="quote-attr">— William Paul Thurston</span>
+      </div>
+    </main>
+
+    <aside style="padding: 24px 24px 24px 0;" class="rail">
+      <div class="card">
+        <b>Daily Goal</b>
+        <div class="donut-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="58" fill="none" stroke="#eeecfe" stroke-width="14"/>
+            <circle id="goalRing" cx="70" cy="70" r="58" fill="none" stroke="#6d5ef8" stroke-width="14"
+              stroke-linecap="round" transform="rotate(-90 70 70)"/>
+            <text x="70" y="76" text-anchor="middle" font-size="26" font-weight="700" fill="#1e1b2e" id="goalPct">0%</text>
+          </svg>
+          <div style="font-size: 13px; color: var(--muted);" id="goalFraction">0 / 20 questions</div>
+        </div>
+        <a href="practice.html" class="btn btn-primary btn-block">Continue Practice</a>
+      </div>
+
+      <div class="card">
+        <b>Upcoming Mock Test</b>
+        <div style="display:flex; gap:12px; align-items:center; margin: 14px 0;">
+          <div style="width:42px;height:42px;border-radius:10px;background:var(--indigo-light);display:flex;align-items:center;justify-content:center;">📅</div>
+          <div>
+            <div style="font-weight:700; font-size:14px;">Full-Length Mock Test</div>
+            <div style="font-size:12px; color:var(--muted);">Pick an exam track to begin</div>
+          </div>
+        </div>
+        <a href="mocktest.html" class="btn btn-outline btn-block">View Details</a>
+      </div>
+
+      <div class="card" id="achievementCard"></div>
+    </aside>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const user = MP.requireUserOrRedirect();
+    if (user) {
+      renderLayout('dashboard.html');
+
+      const hour = new Date().getHours();
+      const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+      document.getElementById('greeting').textContent = `${greet}, ${user.name}! 👋`;
+
+      const stats = MP.getStats();
+      const acc = stats.totalSolved ? Math.round((stats.totalCorrect / stats.totalSolved) * 100) : 0;
+      const scores = MP.getAllScores();
+      const rankedCount = Object.keys(scores).length;
+
+      document.getElementById('statGrid').innerHTML = `
+        <div class="stat-item">
+          <div class="stat-icon" style="background:#eef0ff;">📘</div>
+          <div><div class="stat-value">${stats.totalSolved}</div><div class="stat-label">Questions Solved</div></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon" style="background:#e5f9f6;">🎯</div>
+          <div><div class="stat-value">${acc}%</div><div class="stat-label">Accuracy</div></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon" style="background:#eef0ff;">⏱️</div>
+          <div><div class="stat-value">${MP.fmtTime(stats.studySeconds)}</div><div class="stat-label">Study Time</div></div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon" style="background:#fef2df;">📈</div>
+          <div><div class="stat-value">${rankedCount}</div><div class="stat-label">Topics Started</div></div>
+        </div>
+      `;
+
+      // Continue practicing: topics with existing progress, else first 3 topics
+      const started = TOPICS.filter(t => scores[t.id] && scores[t.id].solved > 0)
+        .sort((a, b) => new Date(scores[b.id].last) - new Date(scores[a.id].last)).slice(0, 3);
+      const fallback = TOPICS.slice(0, 3);
+      const continueTopics = started.length ? started : fallback;
+
+      document.getElementById('continueGrid').innerHTML = continueTopics.map(t => {
+        const s = scores[t.id] || { solved: 0, best: 0 };
+        const pct = Math.min(100, s.solved ? Math.max(s.best, Math.min(95, s.solved * 5)) : 0);
+        return topicCard(t, pct);
+      }).join('');
+
+      const recommended = TOPICS.filter(t => !continueTopics.includes(t)).slice(0, 4);
+      document.getElementById('recommendedGrid').innerHTML = recommended.map(t => {
+        const s = scores[t.id];
+        return `
+          <div class="card topic-card">
+            <div class="topic-head">
+              <div class="topic-icon" style="background:${iconColor(t.category)};">${t.icon}</div>
+              <div><div class="topic-name">${t.name}</div><div class="topic-sub">${t.category}</div></div>
+            </div>
+            <a href="runner.html?id=${t.id}" class="btn btn-primary btn-block btn-sm">Practice</a>
+          </div>`;
+      }).join('');
+
+      function topicCard(t, pct) {
+        return `
+          <div class="card topic-card">
+            <div class="topic-head">
+              <div class="topic-icon" style="background:${iconColor(t.category)};">${t.icon}</div>
+              <div><div class="topic-name">${t.name}</div><div class="topic-sub">${t.category}</div></div>
+            </div>
+            <div class="progress-row">
+              <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+              <a href="runner.html?id=${t.id}" class="go-btn">→</a>
+            </div>
+            <div class="progress-pct">${pct}% Complete</div>
+          </div>`;
+      }
+      function iconColor(category) {
+        const map = {
+          'Foundations': 'linear-gradient(135deg,#6d5ef8,#9b8bff)',
+          'Commercial Maths': 'linear-gradient(135deg,#f5a623,#f7c873)',
+          'Time, Speed & Work': 'linear-gradient(135deg,#17b6a7,#5fd6c9)',
+          'Algebra': 'linear-gradient(135deg,#6d5ef8,#9b8bff)',
+          'Geometry & Mensuration': 'linear-gradient(135deg,#17b6a7,#5fd6c9)',
+          'Data & Statistics': 'linear-gradient(135deg,#f5a623,#f7c873)',
+          'Miscellaneous': 'linear-gradient(135deg,#6d5ef8,#9b8bff)'
+        };
+        return map[category] || 'linear-gradient(135deg,#6d5ef8,#9b8bff)';
+      }
+
+      // Daily goal donut
+      const daily = MP.getDaily();
+      const pct = Math.min(100, Math.round((daily.solved / DAILY_GOAL) * 100));
+      const circumference = 2 * Math.PI * 58;
+      const ring = document.getElementById('goalRing');
+      ring.setAttribute('stroke-dasharray', circumference);
+      ring.setAttribute('stroke-dashoffset', circumference * (1 - pct / 100));
+      document.getElementById('goalPct').textContent = pct + '%';
+      document.getElementById('goalFraction').textContent = `${daily.solved} / ${DAILY_GOAL} questions`;
+
+      // Recent achievement
+      const acc2 = acc;
+      const card = document.getElementById('achievementCard');
+      if (acc2 >= 80 && stats.totalSolved >= 10) {
+        card.innerHTML = `
+          <b>Recent Achievement</b>
+          <div style="display:flex; gap:12px; align-items:flex-start; margin-top:14px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:var(--indigo-light);display:flex;align-items:center;justify-content:center;">⭐</div>
+            <div>
+              <div style="font-weight:700; font-size:14px;">Accuracy Expert</div>
+              <div style="font-size:12px; color:var(--muted);">Achieved ${acc2}% overall accuracy</div>
+            </div>
+          </div>`;
+      } else {
+        card.innerHTML = `
+          <b>Recent Achievement</b>
+          <div class="empty-state" style="padding:24px 8px;">
+            <div class="empty-emoji">🏅</div>
+            Keep practicing to unlock achievements
+          </div>`;
+      }
+    }
+  </script>
+</body>
+</html>

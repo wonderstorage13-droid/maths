@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mock Tests — Maths Practice</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar"></aside>
+    <main>
+      <div id="topbar"></div>
+
+      <h2 style="margin:0 0 4px;">Mock Tests</h2>
+      <p style="color:var(--muted); margin:0 0 20px;">Full-length mock tests, organised by exam. Opens in a new tab.</p>
+
+      <div class="grid-3" id="mockGrid"></div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const user = MP.requireUserOrRedirect();
+    if (user) {
+      renderLayout('mocktest.html');
+
+      const MOCKS = [
+        { name: 'General Dashboard', desc: 'All available mock tests in one place.', url: 'https://commercesehoga.github.io/dashboard', icon: '📊' },
+        { name: 'SSC', desc: 'Staff Selection Commission exam pattern.', url: 'https://commercesehoga.github.io/ssc', icon: '🏛️' },
+        { name: 'Banking', desc: 'IBPS / SBI / bank PO & clerk pattern.', url: 'https://commercesehoga.github.io/banking', icon: '🏦' },
+        { name: 'CUET', desc: 'Common University Entrance Test pattern.', url: 'https://commercesehoga.github.io/cuet', icon: '🎓' },
+        { name: 'JEE / NEET', desc: 'Engineering & medical entrance pattern.', url: 'https://commercesehoga.github.io/jee-neet', icon: '🔬' }
+      ];
+
+      document.getElementById('mockGrid').innerHTML = MOCKS.map(m => `
+        <div class="card topic-card">
+          <div class="topic-head">
+            <div class="topic-icon" style="background:linear-gradient(135deg,#6d5ef8,#9b8bff);">${m.icon}</div>
+            <div><div class="topic-name">${m.name}</div><div class="topic-sub">${m.desc}</div></div>
+          </div>
+          <a href="${m.url}" target="_blank" rel="noopener" class="btn btn-primary btn-block btn-sm">Open Mock Test ↗</a>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

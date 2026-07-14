@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Settings — Maths Practice</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar"></aside>
+    <main>
+      <div id="topbar"></div>
+
+      <h2 style="margin:0 0 4px;">Settings</h2>
+      <p style="color:var(--muted); margin:0 0 20px;">Your profile is saved only on this device.</p>
+
+      <div class="grid-2">
+        <div class="card">
+          <b>Profile</b>
+          <div style="margin-top:14px;">
+            <label style="font-size:12px; color:var(--muted);">Name</label>
+            <input type="text" id="nameField" style="margin-top:6px;" />
+          </div>
+          <div style="margin-top:14px;">
+            <label style="font-size:12px; color:var(--muted);">Player ID (one-time, generated at onboarding)</label>
+            <input type="text" id="idField" disabled style="margin-top:6px; background:var(--bg); color:var(--muted);" />
+          </div>
+          <button class="btn btn-primary" id="saveNameBtn" style="margin-top:16px;">Save Name</button>
+        </div>
+
+        <div class="card">
+          <b>AI Practice & Leaderboard Sync</b>
+          <p style="color:var(--muted); font-size:13px;">These run through Cloudflare Pages Functions, configured once by the site owner — not per visitor:</p>
+          <ul style="color:var(--muted); font-size:13px; padding-left:18px; margin:0;">
+            <li><code>GROQ_API_KEY</code> — powers AI Practice (<code>functions/api/ai-question.js</code>)</li>
+            <li><code>SHEET_URL</code> — your Google Apps Script Web App, for the leaderboard (<code>functions/api/leaderboard.js</code>)</li>
+          </ul>
+          <p style="color:var(--muted); font-size:13px;">Set both in your Cloudflare Pages project → Settings → Environment variables, then redeploy.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const user = MP.requireUserOrRedirect();
+    if (user) {
+      renderLayout('settings.html');
+
+      document.getElementById('nameField').value = user.name;
+      document.getElementById('idField').value = user.id;
+
+      document.getElementById('saveNameBtn').addEventListener('click', () => {
+        const name = document.getElementById('nameField').value.trim();
+        if (!name) return;
+        const u = MP.getUser();
+        u.name = name;
+        MP.set(MP_KEYS.user, u);
+        location.reload();
+      });
+    }
+  </script>
+</body>
+</html>

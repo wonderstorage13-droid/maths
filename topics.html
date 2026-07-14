@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Topics — Maths Practice</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar"></aside>
+    <main>
+      <div id="topbar"></div>
+
+      <h2 style="margin:0 0 4px;">All Topics</h2>
+      <p style="color:var(--muted); margin:0 0 18px;">Your score and accuracy for every topic, updated after each practice round.</p>
+
+      <input type="text" id="filterInput" placeholder="Filter topics..." style="max-width:320px; margin-bottom:18px;" />
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr><th>Topic</th><th>Category</th><th>Solved</th><th>Best Accuracy</th><th>Bookmark</th><th></th></tr>
+          </thead>
+          <tbody id="topicRows"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const user = MP.requireUserOrRedirect();
+    if (user) {
+      renderLayout('topics.html');
+
+      const params = new URLSearchParams(window.location.search);
+      const initialQuery = params.get('q') || '';
+      const filterInput = document.getElementById('filterInput');
+      filterInput.value = initialQuery;
+
+      function renderRows() {
+        const q = filterInput.value.trim().toLowerCase();
+        const scores = MP.getAllScores();
+        const list = TOPICS.filter(t => !q || t.name.toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
+        document.getElementById('topicRows').innerHTML = list.map(t => {
+          const s = scores[t.id] || { solved: 0, best: 0 };
+          const bm = MP.isBookmarked(t.id);
+          return `
+            <tr>
+              <td>${t.icon} ${t.name}</td>
+              <td><span class="badge badge-indigo">${t.category}</span></td>
+              <td>${s.solved}</td>
+              <td>${s.best}%</td>
+              <td><button class="btn btn-sm btn-outline" data-bm="${t.id}">${bm ? '🔖' : '➕'}</button></td>
+              <td><a href="runner.html?id=${t.id}" class="btn btn-sm btn-primary">Practice</a></td>
+            </tr>`;
+        }).join('') || `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:30px;">No topics match your search.</td></tr>`;
+
+        document.querySelectorAll('[data-bm]').forEach(b => b.addEventListener('click', () => {
+          MP.toggleBookmark(b.getAttribute('data-bm'));
+          renderRows();
+        }));
+      }
+
+      filterInput.addEventListener('input', renderRows);
+      renderRows();
+    }
+  </script>
+</body>
+</html>

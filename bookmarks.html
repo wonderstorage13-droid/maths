@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bookmarks — Maths Practice</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar"></aside>
+    <main>
+      <div id="topbar"></div>
+
+      <h2 style="margin:0 0 4px;">Bookmarks</h2>
+      <p style="color:var(--muted); margin:0 0 18px;">Topics you've saved for quick access.</p>
+
+      <div class="grid-4" id="bmGrid"></div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/questions.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const user = MP.requireUserOrRedirect();
+    if (user) {
+      renderLayout('bookmarks.html');
+
+      function render() {
+        const ids = MP.getBookmarks();
+        const topics = TOPICS.filter(t => ids.includes(t.id));
+        const grid = document.getElementById('bmGrid');
+        if (!topics.length) {
+          grid.innerHTML = `<div class="card empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-emoji">🔖</div>
+            No bookmarks yet. Bookmark a topic from the Practice page to see it here.
+          </div>`;
+          return;
+        }
+        grid.innerHTML = topics.map(t => `
+          <div class="card topic-card">
+            <div class="topic-head">
+              <div class="topic-icon" style="background:linear-gradient(135deg,#6d5ef8,#9b8bff);">${t.icon}</div>
+              <div><div class="topic-name">${t.name}</div><div class="topic-sub">${t.category}</div></div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <a href="runner.html?id=${t.id}" class="btn btn-primary btn-sm" style="flex:1;">Practice</a>
+              <button class="btn btn-outline btn-sm" data-remove="${t.id}">Remove</button>
+            </div>
+          </div>
+        `).join('');
+        document.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => {
+          MP.toggleBookmark(b.getAttribute('data-remove'));
+          render();
+        }));
+      }
+      render();
+    }
+  </script>
+</body>
+</html>

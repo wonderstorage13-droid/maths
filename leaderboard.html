@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Leaderboard — Maths Practice</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside id="sidebar"></aside>
+    <main>
+      <div id="topbar"></div>
+
+      <h2 style="margin:0 0 4px;">Leaderboard</h2>
+      <p style="color:var(--muted); margin:0 0 18px;">Your mock test and practice scores, best first. Connect a sheet in Settings to sync scores like CUET-style leaderboards.</p>
+
+      <div class="card">
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>Player ID</th><th>Score</th><th>Detail</th><th>Date</th></tr></thead>
+          <tbody id="lbRows"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    const user = MP.requireUserOrRedirect();
+    if (user) {
+      renderLayout('leaderboard.html');
+
+      const board = MP.getLeaderboard();
+      const rows = document.getElementById('lbRows');
+      if (!board.length) {
+        rows.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:30px;">
+          No scores yet. Scores are added automatically after a mock test or a full practice round finishes.</td></tr>`;
+      } else {
+        rows.innerHTML = board.map((e, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${e.name}${e.id === user.id ? ' <span class="badge badge-indigo">You</span>' : ''}</td>
+            <td style="font-size:11px; color:var(--muted);">${e.id}</td>
+            <td><b>${e.score}</b></td>
+            <td>${e.meta || '—'}</td>
+            <td>${new Date(e.date).toLocaleDateString()}</td>
+          </tr>
+        `).join('');
+      }
+    }
+  </script>
+</body>
+</html>
